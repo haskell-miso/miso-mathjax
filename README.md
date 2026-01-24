@@ -29,11 +29,9 @@ app = component () updateModel viewModel
 updateModel :: Action -> Transition Model Action
 updateModel = \case
   InitMathJAX domRef -> io_ $ do
-    o <- create
-    setProp "domRef" domRef o
     () <- inline """
       MathJax.typesetPromise([domRef]).then(() => { console.log('typeset!'); });
-    """ o
+    """ =<< createWith [ "domRef" =: domRef ]
     pure ()
 -----------------------------------------------------------------------------
 viewModel :: () -> View Model Action
