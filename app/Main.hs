@@ -1,6 +1,7 @@
 -----------------------------------------------------------------------------
 {-# LANGUAGE CPP               #-}
 {-# LANGUAGE LambdaCase        #-}
+{-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE MultilineStrings  #-}
 {-# LANGUAGE OverloadedStrings #-}
 -----------------------------------------------------------------------------
@@ -8,6 +9,7 @@ module Main where
 -----------------------------------------------------------------------------
 import           Miso
 import           Miso.Html
+import           Miso.FFI.QQ (js)
 import qualified Miso.CSS as CSS
 import           Miso.Html.Property
 -----------------------------------------------------------------------------
@@ -21,7 +23,7 @@ main :: IO ()
 #ifdef INTERACTIVE
 main = reload (startApp mempty app)
 #else
-main = run (startApp mempty app)
+main = startApp mempty app
 #endif
 -----------------------------------------------------------------------------
 data Action = InitMathJAX DOMRef
@@ -33,11 +35,8 @@ app = component () updateModel viewModel
 -----------------------------------------------------------------------------
 updateModel :: Action -> Transition Model Action
 updateModel = \case
-  InitMathJAX domRef -> io_ $ do
-    () <- inline """
-      MathJax.typesetPromise([domRef]).then(() => { console.log('typeset!'); });
-    """ =<< createWith [ "domRef" =: domRef ]
-    pure ()
+  InitMathJAX domRef -> io_
+    [js| MathJax.typesetPromise([${domRef}]).then(() => { console.log('typeset!'); }); |]
 -----------------------------------------------------------------------------
 viewModel :: () -> View Model Action
 viewModel () = div_
