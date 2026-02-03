@@ -6,6 +6,7 @@ An example integration of [miso](https://github.com/dmjio/miso) and [MathJAX](ht
 -----------------------------------------------------------------------------
 {-# LANGUAGE CPP               #-}
 {-# LANGUAGE LambdaCase        #-}
+{-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE MultilineStrings  #-}
 {-# LANGUAGE OverloadedStrings #-}
 -----------------------------------------------------------------------------
@@ -13,11 +14,22 @@ module Main where
 -----------------------------------------------------------------------------
 import           Miso
 import           Miso.Html
+import           Miso.FFI.QQ (js)
 import qualified Miso.CSS as CSS
 import           Miso.Html.Property
 -----------------------------------------------------------------------------
+#ifdef WASM
+#ifndef INTERACTIVE
+foreign export javascript "hs_start" main :: IO ()
+#endif
+#endif
+-----------------------------------------------------------------------------
 main :: IO ()
-main = run (startApp mempty app)
+#ifdef INTERACTIVE
+main = reload (startApp mempty app)
+#else
+main = startApp mempty app
+#endif
 -----------------------------------------------------------------------------
 data Action = InitMathJAX DOMRef
 -----------------------------------------------------------------------------
@@ -28,11 +40,8 @@ app = component () updateModel viewModel
 -----------------------------------------------------------------------------
 updateModel :: Action -> Transition Model Action
 updateModel = \case
-  InitMathJAX domRef -> io_ $ do
-    () <- inline """
-      MathJax.typesetPromise([domRef]).then(() => { console.log('typeset!'); });
-    """ =<< createWith [ "domRef" =: domRef ]
-    pure ()
+  InitMathJAX domRef -> io_
+    [js| MathJax.typesetPromise([${domRef}]).then(() => { console.log('typeset!'); }); |]
 -----------------------------------------------------------------------------
 viewModel :: () -> View Model Action
 viewModel () = div_
@@ -42,8 +51,14 @@ viewModel () = div_
       [ CSS.fontFamily "monospace"
       ]
     ]
-    [ "🍜 🧮 miso-mathjax"
+    [ "🍜 🧮 "
+    , a_
+      [ href_ "https://github.com/haskell-miso/miso-mathjax"
+      ]
+      [ "miso-mathjax"
+      ]
     ]
+  , hr_ []
   , div_
     [ id_ "math-container"
     , onCreatedWith InitMathJAX
