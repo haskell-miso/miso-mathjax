@@ -33,7 +33,7 @@ type Model = ()
 app :: App Model Action
 app = component () updateModel viewModel
 -----------------------------------------------------------------------------
-updateModel :: Action -> Transition Model Action
+updateModel :: Action -> Effect ROOT Model Action
 updateModel = \case
   InitMathJAX domRef -> io_
     [js| MathJax.typesetPromise([${domRef}]).then(() => { console.log('typeset!'); }); |]
