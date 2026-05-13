@@ -39,8 +39,7 @@ updateModel = \case
     [js| MathJax.typesetPromise([${domRef}]).then(() => { console.log('typeset!'); }); |]
 -----------------------------------------------------------------------------
 viewModel :: () -> View Model Action
-viewModel () = div_
-  [ ]
+viewModel () = vfrag
   [ h2_
     [ CSS.style_
       [ CSS.fontFamily "monospace"
